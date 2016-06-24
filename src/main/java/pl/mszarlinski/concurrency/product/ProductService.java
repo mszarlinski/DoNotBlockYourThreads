@@ -1,4 +1,4 @@
-package pl.mszarlinski.concurrency.user;
+package pl.mszarlinski.concurrency.product;
 
 import lombok.RequiredArgsConstructor;
 import pl.mszarlinski.concurrency.util.Sleep;
@@ -14,18 +14,18 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @RequiredArgsConstructor(onConstructor = @__(@Autowired))
-public class UserService {
+public class ProductService {
 
-    private final UserRepository userRepository;
+    private final ProductRepository productRepository;
 
     private final ExecutorService executorService;
 
-    public User getSyncUser(final String userName) {
+    public Product getSyncProduct(final String productName) {
         Sleep.milis(500);
-        return userRepository.findByName(userName);
+        return productRepository.findByName(productName);
     }
 
-    public Future<User> getAsyncUser(final String userName) {
-        return executorService.submit(() -> getSyncUser(userName));
+    public Future<Product> getAsyncProduct(final String productName) {
+        return executorService.submit(() -> getSyncProduct(productName));
     }
 }

@@ -1,0 +1,7 @@
+INSERT INTO USER(id, name) VALUES (1, 'mszarl');
+
+INSERT INTO PERMISSION(id, user_id, name) VALUES (1, 1, 'PRODUCTS');
+INSERT INTO PERMISSION(id, user_id, name) VALUES (2, 1, 'REVIEWS');
+
+INSERT INTO PRODUCT(id, name, price) VALUES (1, 'NOTEBOOK', 4999.99);
+
