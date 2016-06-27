@@ -64,11 +64,21 @@ public class CompletableFutureTestCase {
         final CompletableFuture<Permission> fPermission = userService.getAsyncUser("mszarl")
             .thenCompose(user -> permissionService.getAsyncPermission(user.getName(), Permission.PRODUCTS));
 
-        CompletableFuture.allOf(fPermission, fProduct).join();
+        CompletableFuture.allOf(fPermission, fProduct)
+            .thenAccept(aVoid -> {
 
-        // then
-        assertThat(fPermission.get()).isNotNull();
-        assertThat(fProduct.get()).isNotNull();
+                // then
+                assertThat(get(fPermission)).isNotNull();
+                assertThat(get(fProduct)).isNotNull();
+            }).get();
+    }
+
+    private <T> T get(final CompletableFuture<T> future) {
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

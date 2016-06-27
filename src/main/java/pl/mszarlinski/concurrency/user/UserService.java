@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import pl.mszarlinski.concurrency.util.Sleep;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,12 +18,14 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+    private final ExecutorService executorService;
+
     public User getSyncUser(final String userName) {
         Sleep.milis(500);
         return userRepository.findByName(userName);
     }
 
     public CompletableFuture<User> getAsyncUser(final String userName) {
-        return CompletableFuture.supplyAsync(() -> getSyncUser(userName));
+        return CompletableFuture.supplyAsync(() -> getSyncUser(userName), executorService);
     }
 }
