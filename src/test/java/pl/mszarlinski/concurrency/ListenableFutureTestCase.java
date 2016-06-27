@@ -2,6 +2,7 @@ package pl.mszarlinski.concurrency;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import lombok.AllArgsConstructor;
 import pl.mszarlinski.concurrency.permission.Permission;
 import pl.mszarlinski.concurrency.permission.PermissionService;
 import pl.mszarlinski.concurrency.product.Product;
@@ -9,6 +10,7 @@ import pl.mszarlinski.concurrency.product.ProductService;
 import pl.mszarlinski.concurrency.user.User;
 import pl.mszarlinski.concurrency.user.UserService;
 
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 
@@ -69,27 +71,19 @@ public class ListenableFutureTestCase {
         final ListenableFuture<Product> fProduct = productService.getAsyncProduct("NOTEBOOK");
 
         final ListenableFuture<User> fUser = userService.getAsyncUser("mszarl");
-        Futures.addCallback(fUser, new FutureCallback<User>() {
+        final ListenableFuture<Permission> fPermission = Futures.transformAsync(fUser, user -> permissionService.getAsyncPermission(user.getName(), Permission.PRODUCTS));
+
+        final ListenableFuture<List<Object>> fWholeOperation = Futures.allAsList(fPermission, fProduct);
+        final ListenableFuture<Result> fResult = Futures.transform(fWholeOperation, this::fromList);
+
+        // then
+
+        Futures.addCallback(fResult, new FutureCallback<Result>() {
             @Override
-            public void onSuccess(final User user) {
-                final ListenableFuture<Permission> fPermission = permissionService.getAsyncPermission(user.getName(), Permission.PRODUCTS);
-                Futures.addCallback(fPermission, new FutureCallback<Permission>() {
-                    @Override
-                    public void onSuccess(final Permission permission) {
-                        final Product product = get(fProduct);
-
-                        assertThat(permission).isNotNull();
-                        assertThat(product).isNotNull();
-
-                        waitForFutureCompletionLatch.countDown();
-                    }
-
-                    @Override
-                    public void onFailure(final Throwable t) {
-                        fail(t.getMessage());
-                    }
-                });
-                get(fPermission);
+            public void onSuccess(final Result result) {
+                assertThat(result.permission).isNotNull();
+                assertThat(result.product).isNotNull();
+                waitForFutureCompletionLatch.countDown();
             }
 
             @Override
@@ -98,17 +92,20 @@ public class ListenableFutureTestCase {
             }
         });
 
-        fUser.get();
+        fResult.get();
 
         waitForFutureCompletionLatch.await();
     }
 
-    private <T> T get(final ListenableFuture<T> future) {
-        try {
-            return future.get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException(e);
-        }
+    private Result fromList(final List<Object> input) {
+        return new Result((Permission) input.get(0), (Product) input.get(1));
+    }
+
+    @AllArgsConstructor
+    private class Result {
+        Permission permission;
+
+        Product product;
     }
 
 }
