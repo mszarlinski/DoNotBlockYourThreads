@@ -57,13 +57,14 @@ public class JdkFutureTestCase {
     @Test(timeout = 1300)
     public void should_return_notebook_product() throws ExecutionException, InterruptedException {
         // when
+        final Future<Product> fProduct = productService.getAsyncProduct("NOTEBOOK");
+
         final Future<User> fUser = userService.getAsyncUser("mszarl");
         final User user = fUser.get();
 
         final Future<Permission> fPermission = permissionService.getAsyncPermission(user.getName(), Permission.PRODUCTS);
         final Permission permission = fPermission.get();
 
-        final Future<Product> fProduct = productService.getAsyncProduct("NOTEBOOK");
         final Product product = fProduct.get();
 
         // then
